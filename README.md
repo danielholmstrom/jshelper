@@ -1,4 +1,4 @@
 jshelper
 ========
 
-Basic javascript helpers
+Basic javascript helpers for browsers.
