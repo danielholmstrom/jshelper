@@ -1,6 +1,32 @@
 (function() {
     "use strict";
 
+    var $$,
+    consoleMethods = [
+        "memory",
+        "profiles",
+        "debug",
+        "error",
+        "info",
+        "log",
+        "warn",
+        "dir",
+        "dirxml",
+        "trace",
+        "assert",
+        "count",
+        "markTimeline",
+        "profile",
+        "profileEnd",
+        "time",
+        "timeEnd",
+        "timeStamp",
+        "group",
+        "groupCollapsed",
+        "groupEnd"],
+        i,
+        l;
+
     /** Find the script-tag that loaded this javascript file */
     function findSelf() {
         var scripts = document.getElementsByTagName('script'),
@@ -13,7 +39,8 @@
         throw 'Could not find script-tag loading jshelper.js';
     }
 
-    /** Get configration from data-* attributes in an element
+    /** Get configuration from data-* attributes in an element.
+     *
      * dashes will be converted to nested objects, underscore will be camelCased
      *
      * Example:
@@ -29,7 +56,7 @@
      *      }
      * }
      */
-    function getConfig(element) {
+    function getConfigFromElement(element) {
         var config = {}, i, attribute;
 
         function addConfig(name, value) {
@@ -70,11 +97,30 @@
         return config;
     }
 
-    var $$ = {
-        config: getConfig(findSelf())
+    function noop() {
+    }
+
+    $$ = {
+        config: getConfigFromElement(findSelf())
     };
 
-    // If globalObjectName is set, register that global object
+    if (typeof(console) === 'undefined') {
+        // Emulate console
+        console = {};
+        for (i = 0, l = consoleMethods.length; i < l; i++) {
+            console[consoleMethods[i]] = noop;
+        }
+    } else if (!$$.config.debug) {
+        // Silence console
+        for (i = 0, l = consoleMethods.length; i < l; i++) {
+            console[consoleMethods[i]] = noop;
+        }
+    }
+
+    // Assign functions
+    $$.getConfigFromElement = getConfigFromElement;
+
+    // If globalObjectName is set, register that global object on window
     if ($$.config.globalObjectName) {
         window[$$.config.globalObjectName] = $$;
     }
