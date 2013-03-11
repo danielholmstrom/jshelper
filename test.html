@@ -7,10 +7,16 @@
         <meta name="author" content="daniel holmstrom">
     </head>
     <body>
-        <div id="config">
-        </div>
-        <script data-global_object_name="JsHelper" data-debug="1" data-site-host="localhost" data-site-port="8000" src="jshelper.js"></script>
+        <script id="JsHelper"
+            data-camel_case="camelCase"
+            data-site-host="localhost"
+            data-debug='1'
+            data-site-port="8000"
+            src="jshelper.js"></script>
+
         <script>
+            JsHelper.setupFromElementId('JsHelper');
+            console.log('With configFromElementId', JsHelper.config);
         </script>
     </body>
 </html>

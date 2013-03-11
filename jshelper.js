@@ -1,4 +1,4 @@
-(function() {
+(function(rootScope) {
     "use strict";
 
     var $$,
@@ -27,21 +27,12 @@
         i,
         l;
 
-    /** Find the script-tag that loaded this javascript file */
-    function findSelf() {
-        var scripts = document.getElementsByTagName('script'),
-            i;
-        for (i = scripts.length - 1; i >= 0; i--) {
-            if ((scripts[i].innerText || scripts[i].textContent).indexOf("983b5cb2-6613-43cf-a4a8-9281cab66f3b")) {
-                return scripts[i];
-            }
-        }
-        throw 'Could not find script-tag loading jshelper.js';
-    }
-
     /** Get configuration from data-* attributes in an element.
      *
-     * dashes will be converted to nested objects, underscore will be camelCased
+     * dashes will be converted to nested objects, underscore will be
+     * camelCased.
+     *
+     * 'debug' will be set to false if it's missing or is set to one of '', '0'.
      *
      * Example:
      *
@@ -93,36 +84,52 @@
                 addConfig(attribute.name, attribute.value);
             }
         }
-        config.debug = config.debug || false;
+        config.debug = config.hasOwnProperty('debug') && config.debug !== '' && config.debug !== '0' ? true : false;
         return config;
     }
 
+    /**
+     * No-op function
+     */
     function noop() {
     }
 
+    /** Our object */
     $$ = {
-        config: getConfigFromElement(findSelf())
     };
 
-    if (typeof(console) === 'undefined') {
-        // Emulate console
-        console = {};
-        for (i = 0, l = consoleMethods.length; i < l; i++) {
-            console[consoleMethods[i]] = noop;
-        }
-    } else if (!$$.config.debug) {
-        // Silence console
-        for (i = 0, l = consoleMethods.length; i < l; i++) {
-            console[consoleMethods[i]] = noop;
+    /** Setup console based on config
+     *
+     * If 'console' is missing all console methods will be emulated with 'noop'
+     * If config.debug is set to '0' all console methods will be replaced with 'noop'.
+     */
+    function setupConsole() {
+        if (typeof(console) === 'undefined') {
+            // Emulate console
+            console = {};
+            for (i = 0, l = consoleMethods.length; i < l; i++) {
+                console[consoleMethods[i]] = noop;
+            }
+        } else if (!this.config.debug) {
+            // Silence console
+            for (i = 0, l = consoleMethods.length; i < l; i++) {
+                console[consoleMethods[i]] = noop;
+            }
         }
     }
 
     // Assign functions
     $$.getConfigFromElement = getConfigFromElement;
+    $$.setupConsole = setupConsole;
+    $$.configFromElementId = function(id) {
+        this.config = this.getConfigFromElement(document.getElementById(id));
+    };
+    $$.setupFromElementId = function(id) {
+        this.configFromElementId(id);
+        this.setupConsole();
+    };
 
-    // If globalObjectName is set, register that global object on window
-    if ($$.config.globalObjectName) {
-        window[$$.config.globalObjectName] = $$;
-    }
+    // Assign to JsHelper
+    rootScope.JsHelper = $$;
 
-})();
+})(window);
